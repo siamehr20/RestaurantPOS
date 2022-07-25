@@ -16,6 +16,8 @@ import uuid
 from khayyam import jalali_datetime, JalaliDatetime
 from abc import abstractmethod
 from lib import ClassBase, Manager
+from lib import ClassBase, Manager
+
 
 
 class Item(ClassBase):
@@ -26,18 +28,19 @@ class Item(ClassBase):
     items_counts = 0
 
 
-    def __init__(self, uuid, item_id, name, item_type, price, time):
+    def __init__(self,time,_id, item_id, name, item_type, price,datetime=None):
         # super().__init__(**kwargs)
-        self.uuid = uuid
+        self._id = _id
         self.item_id = item_id
         self.name = name
         self.item_type = item_type
         self.price = price
         self.time = time
-        self.datetime = JalaliDatetime.now().strftime('%C')
+        self.datetime = datetime
         Item.item_list.append(self)
         self.add_to_related_list(self.item_type)
         self.introduce_class_name(type(self))
+        self.manager.save_data(type(self),self)
 
 
     def add_to_related_list(self, item_type):
@@ -53,9 +56,9 @@ class Item(ClassBase):
         cls.items_counts += 1
         return cls.items_counts
 
-    @classmethod
-    def uuid_generator(cls):
-        return cls.uuid
+    # @classmethod
+    # def uuid_generator(cls):
+    #     return cls.uuid
 
     @classmethod
     def prompt(cls, **kwarg):
@@ -64,10 +67,12 @@ class Item(ClassBase):
         cls.price = input('Enter Item Price: ')
         cls.time = input('Enter The Time To prepare item: ')
         cls.item_id = cls.get_item_id()
+
         result = {
-            'uuid': uuid.uuid4().hex, 'name': cls.name,
+            '_id': uuid.uuid4().hex, 'name': cls.name,
             'item_id': cls.item_id, 'item_type': cls.item_type,
-            'price': cls.price, 'time': cls.time
+            'price': cls.price, 'time': cls.time,
+            'datetime': JalaliDatetime.now().strftime('%C')
         }
 
         return result
@@ -110,22 +115,27 @@ class Item(ClassBase):
     @abstractmethod
     def introduce_class_name(self, type_obj):
         # parrent_class = self.__class__
-        if not isinstance(self.manager, Manager):
+        if type_obj not in Manager.class_list :
             return self.manager(type_obj)
 
     @classmethod
-    def Sample(cls):
-        return cls(uuid=uuid.uuid4().hex, item_id='1', name='pizza', item_type='f', price='25,000', time="15\'")
+    def sample(cls):
+        return cls(_id=uuid.uuid4().hex,item_id='1', name='pizza', item_type='f', price='25,000', time="15\'")
 
     @classmethod
-    def Sample1(cls):
-        return cls(uuid=uuid.uuid4().hex, item_id='2', name='pasta', item_type='f', price='55,000', time="15\'")
+    def sample1(cls):
+        return cls(_id=uuid.uuid4().hex,item_id='2', name='pasta', item_type='f', price='55,000', time="20\'")
 
-
-# item1 = Item.Sample()
-# item2 = Item.Sample1()
-# Manager.show_menu()
-
+    @classmethod
+    def db_initial(self,**kwargs):
+        from Res_DB.models.menu import Item
+        Item(**kwargs)
+# Item.sample()
+items = Item.prompt()
+Item.db_initial(**items)
+# Manager.save_data(Item,item1)
+# Manager.load_data(Item)
+# from src.order import Order
 # TODO-2: Add item_id to the Item class, item_id should be auto incremental
 # TODO-2: item_types should be one of (f, s or b) for Food, Starter or Beverage
 # TODO-2: Change datetime attr to be assigned automatically in Item class

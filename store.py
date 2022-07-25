@@ -14,3 +14,4 @@ class Store:
     def load_from_file(cls,path):
         with open(path,'r') as f:
             f.readlines(json.load())
+

@@ -21,6 +21,7 @@
 from abc import abstractmethod
 import khayyam
 import json
+from pymongo import MongoClient
 
 FILE_PATH = '/home/siamehr/PycharmProjects/ResturantPOS/src/resturantPOS/__fixtures/items_list'
 
@@ -28,18 +29,36 @@ FILE_PATH = '/home/siamehr/PycharmProjects/ResturantPOS/src/resturantPOS/__fixtu
 class Manager:
     class_list = []
     obj_dict = {}
+    flag = False
 
     def __init__(self, _class):
+
         self._class = _class
         Manager.class_list.append(_class)
         Manager.obj_dict[_class] = self
 
-    def create(self):
-        self.prompt()
+    def create(class_self, load_flg=False):
+        if load_flg:
+            Manager.load_data(class_self)
+        else:
+            class_self.prompt()
 
-    def search(self, **kwargs):
+
+    def search_by_db(class_self,**kwargs):
+        # cls_name = class_self.__name__ +'s'
+        client = MongoClient()
+        cls_collection = class_self.__name__ + 's'
+        with client:
+            keys_list = list(kwargs.keys())
+            for key in keys_list:
+                value = kwargs[key]
+
+
+
+
+    def search(class_self, **kwargs):
         cls_objs_list = None
-        cls_name = self.__name__
+        cls_name = class_self.__name__
         cls_objs_list_str = cls_name.lower() + '_list'
 
         keys_list = list(kwargs.keys())
@@ -51,22 +70,47 @@ class Manager:
                         if getattr(item_obj, key) == value:
                             return item_obj
 
-                        else:
-                            print('Nothing Found . . . !')
+            else:
+                print('Nothing Found . . . !')
 
     def update(self):
-        obj_info = input('Enter The Item\'s kez value:' ).split()
-        kwargs = { obj_info[0] : obj_info[1]}
-        item_obj = self.manager.search(self,**kwargs)
+        obj_info = input('Enter The Item\'s kez value:').split()
+        kwargs = {obj_info[0]: obj_info[1]}
+        item_obj = self.manager.search(self, **kwargs)
         print(item_obj.serializer())
         attr = input('Enter The attr you want to Update: ')
         new_value = input('Enter the new value: ')
-        setattr(item_obj,attr,new_value)
+        setattr(item_obj, attr, new_value)
+
+    def check_load_flg(func):
+        def inner(class_self, self):
+            if not Manager.flag:
+                func(class_self, self)
+
+        return inner
+
+    # @classmethod
+    @check_load_flg
+    def save_data(class_self, self):
+        client = MongoClient()
+        cls_collection = class_self.__name__ + 's'
+        with client:
+            db = client.Restaurant
+            coll = eval('db.' + cls_collection)
+            coll.insert_one(self.serializer())
+        # with open(path, 'w') as f:
+        #     f.write(json.dumps(data))
 
     @classmethod
-    def save_to_file(cls, path, data):
-        with open(path, 'w') as f:
-            f.write(json.dumps(data))
+    def load_data(cls, class_self):
+        Manager.flag = True
+        client = MongoClient()
+        cls_collection = class_self.__name__ + 's'
+        with client:
+            db = client.Restaurant
+            coll = eval('db.' + cls_collection)
+            for every_obj in coll.find():
+                eval('class_self(**every_obj)')
 
     @classmethod
     def show_menu(cls):
@@ -83,12 +127,3 @@ class ClassBase:
     # @abstractmethod
     # def introduce_class_name(self):
     #     pass
-
-
-class manager:
-    _class_attr = None
-
-    def __init__(self):
-        pass
-
-

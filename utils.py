@@ -36,26 +36,29 @@ class Run_App(ClassBase):
             '0': Item,
             '1': Order,
             '2': Bill
+
         }
-        index = input('Enter The Related class: \n '
-                      '0:Item \t 1:Order \t 2: Bill')
+        index_flg = [i for i in input('Enter The Related class: \n '
+                                      '0:Item \t 1:Order \t 2: Bill ** with new or load(0_1):').split()]
 
-        cls.manager.create(class_name[index])
+        cls.manager.create(class_name[index_flg[0]], bool(int(index_flg[1])))
 
-    # @classmethod
-    # def choose_main(cls):
-    #     MAIN_MENU = {
-    #         '0': Run_App.end_program,
-    #         '1': Manager.show_menu(),
-    #         '2': Run_App.create_obj(),
-    #         '3': Order.add_order
-    #     }
-    #     return MAIN_MENU[]
+
+
+# @classmethod
+# def choose_main(cls):
+#     MAIN_MENU = {
+#         '0': Run_App.end_program,
+#         '1': Manager.show_menu(),
+#         '2': Run_App.create_obj(),
+#         '3': Order.add_order
+#     }
+#     return MAIN_MENU[]
 
 from utils import Run_App
 
+
 def run_main():
-    pass
     main_menu = {
         '0': Run_App.end_program,
         '1': Manager.show_menu,
